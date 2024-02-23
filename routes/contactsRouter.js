@@ -13,4 +13,11 @@ contactsRouter.post("/", contactsControllers.createContact);
 
 contactsRouter.put("/:id", contactsControllers.updateContact);
 
+// contactsRouter.patch(
+//     "/:id/favorite",
+//     isValidId,
+//     validateBody(updateFavoriteSchema),
+//     contactsController.updateStatusContact
+//   );
+
 export default contactsRouter;
