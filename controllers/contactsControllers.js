@@ -12,8 +12,18 @@ import HttpError from "../helpers/HttpError.js";
 import { addSchema, updateSchema } from "../schemas/contactsSchemas.js";
 
 const getAllContacts = async (req, res) => {
-  const result = await listContacts();
-  res.status(200).json(result);
+  const { _id: owner } = req.user;
+  const { page = 1, limit = 10 } = req.query;
+  const skip = (page - 1) * limit;
+  const result = await contactsService.getContactsByFilter(
+    { owner },
+    { skip, limit }
+  );
+  const total = await contactsService.getContactsCountByFilter({ owner });
+  res.json({
+    total,
+    result,
+  });
 };
 
 const getOneContact = async (req, res) => {
@@ -27,7 +37,11 @@ const getOneContact = async (req, res) => {
 
 const deleteContact = async (req, res) => {
   const { id } = req.params;
-  const result = await removeContact(id);
+  const { _id: owner } = req.user;
+  const result = await contactsService.removeContactByFilter({
+    _id: id,
+    owner,
+  });
   if (!result) {
     throw HttpError(404, "Not found");
   }
@@ -36,12 +50,9 @@ const deleteContact = async (req, res) => {
 };
 
 const createContact = async (req, res) => {
-  const { name, email, phone } = req.body;
-  const { error } = addSchema.validate(req.body);
-  if (error) {
-    throw HttpError(400, error.message);
-  }
-  const result = await addContact(name, email, phone);
+  const { _id: owner } = req.user;
+  const result = await contactsService.addContact({ ...req.body, owner });
+
   res.status(201).json(result);
 };
 
@@ -51,7 +62,11 @@ const updateContact = async (req, res) => {
     throw HttpError(400, error.message);
   }
   const { id } = req.params;
-  const result = await updateContactById(id, req.body);
+  const { _id: owner } = req.user;
+  const result = await contactsService.updateContactByFilter(
+    { _id: id, owner },
+    req.body
+  );
   if (!result) {
     throw HttpError(404, "Not found");
   }
